@@ -89,5 +89,3 @@ if __name__ == "__main__":
     end_time = time.time()
 
     print(f"Compression time: {end_time - start_time:.2f} seconds")
-    print(f"Original file size: {os.path.getsize(original_file)} bytes")
-    print(f"Compressed file size: {os.path.getsize(compressed_file)} bytes")
