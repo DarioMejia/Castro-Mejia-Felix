@@ -1,5 +1,6 @@
 import time
 import pickle
+import sys
 from compresor import build_huffman_tree
 
 def decompress(compressed_file, decompressed_file, freq_map, padding_length, byte_array):
@@ -29,7 +30,8 @@ def decompress(compressed_file, decompressed_file, freq_map, padding_length, byt
 
 
 if __name__ == "__main__":
-    compressed_file = "comprimido.elmejorprofesor"
+    args = sys.argv[1:]
+    compressed_file = args[0]
     decompressed_file = "descomprimido-elmejorprofesor.txt"
 
     # Load compressed data
