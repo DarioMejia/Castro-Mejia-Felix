@@ -1,0 +1,34 @@
+text1.txt
+Compression time: 2.27 seconds
+Decompression time: 3.91 seconds
+Verification result: ok
+Original size 4077667 compressed 2342404 decompressed 4077667
+compression rate 57%
+Sized diff between original and decompressed 0
+text2.txt
+Compression time: 4.28 seconds
+Decompression time: 9.20 seconds
+Verification result: ok
+Original size 8737950 compressed 4908262 decompressed 8737950
+compression rate 56%
+Sized diff between original and decompressed 0
+text3.txt
+Compression time: 14.14 seconds
+Verification result: nok
+Original size 37644498 compressed 21904053 decompressed 0
+compression rate 58%
+Sized diff between original and decompressed 37644498
+text4.txt
+Compression time: 2.29 seconds
+Decompression time: 4.66 seconds
+Verification result: ok
+Original size 4392981 compressed 2619214 decompressed 4392981
+compression rate 59%
+Sized diff between original and decompressed 0
+text5.txt
+Compression time: 1.52 seconds
+Decompression time: 3.95 seconds
+Verification result: ok
+Original size 4077667 compressed 2342404 decompressed 4077667
+compression rate 57%
+Sized diff between original and decompressed 0
