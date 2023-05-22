@@ -54,31 +54,35 @@ def frequency(start,end,content):
             freq_map[char] = 0
         freq_map[char] += 1
     return freq_map
+    
 
 def encode(start,end,content,code_map):
     return "".join([code_map[char] for char in content[start:end]])
+
+def baytepart(contentPart):
+    return bytearray([int(contentPart[i:i + 8], 2) for i in range(0, len(contentPart), 8)])
 
 if __name__ == "__main__":
     # Declaraciones para la paralelización
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
-    data = [0]* 4 
+    data = [0]* 5 
+    #Lectura del archivo
+    original_file = sys.argv[1]
+    compressed_file = "comprimido.elmejorprofesor"
+    # Read input file
+    with open(original_file, 'rb') as file:
+        content = file.read().decode('ISO-8859-1')
 
     # Proceso 0 es administrador y trabajador
     if rank==0:
         process = {}
         total_time = 0
  
-        #Lectura del archivo
-        original_file = sys.argv[1]
-        compressed_file = "comprimido.elmejorprofesor"
         #Inicio del proceso de compresion
 
         start_time = time.time()
-        # Read input file
-        with open(original_file, 'rb') as file:
-         content = file.read().decode('ISO-8859-1')
         end_time = time.time()
         total_time += end_time - start_time
         process["Read file"] = end_time - start_time
@@ -89,16 +93,14 @@ if __name__ == "__main__":
         for i in range(1,size):
             parte_size = len(content) // size
             data[0] = i * parte_size
-            data[1] = (i + 1) * parte_size
-            data[2] = content
-            comm.ssend(data, dest=i)
-
+            if i==size-1:
+                data[1] = len(content)
+            else:
+                data[1] = (i + 1) * parte_size
+            comm.send(data, dest=i)
         #trabajar el mismo
         parte_size = len(content) // size
-        data[0] = rank * parte_size
-        data[1] = (rank + 1) * parte_size
-        data[2] = content
-        freque = frequency(data[0],data[1],data[2])
+        freque = frequency(0,parte_size,content)
         #print(freque,"PROCESO", rank,"\n")
         freq_maps = comm.gather(freque, root=0)   
         combined_freq_map = {}
@@ -126,8 +128,17 @@ if __name__ == "__main__":
         total_time += end_time - start_time
         process["Generate code map"] = end_time - start_time
         
+        for i in range(1,size):
+            data=code_map
+            comm.send(data, dest=i)
+
         # Encode content
         start_time = time.time()
+        encoded_content = encode(0,parte_size,content,code_map) #SUS(No me deja poner los data[i])
+        parts_encoded_content = comm.gather(encoded_content, root=0)
+        complete_encoded_content = ""
+        for i in parts_encoded_content:
+            complete_encoded_content += i
         encoded_content = "".join([code_map[char] for char in content])
         end_time = time.time()
         total_time += end_time - start_time
@@ -135,7 +146,7 @@ if __name__ == "__main__":
 
         start_time = time.time()
         # Convert the encoded content string to a bytearray
-        padded_encoded_content = encoded_content + "1"
+        padded_encoded_content = complete_encoded_content + "1"
         padding_length = 8 - len(padded_encoded_content) % 8
         padded_encoded_content += "0" * padding_length
         end_time = time.time()
@@ -143,13 +154,51 @@ if __name__ == "__main__":
         process["padding"] = end_time - start_time
 
         start_time = time.time()
-        byte_array = bytearray([int(padded_encoded_content[i:i + 8], 2) for i in range(0, len(padded_encoded_content), 8)])
+        #paralelización de array de bytes
+        for i in range(1,size):
+            parte_size = len(padded_encoded_content) // size
+            data[0] = (i-1) * parte_size
+            if i==size-1:
+                data[1] = min(i * parte_size, len(padded_encoded_content))
+            else:
+                data[1] = min(i * parte_size, len(padded_encoded_content))
+            data[2] = padded_encoded_content[data[0]:data[1]]
+            comm.send(data[2], dest=i)
+        parte_size = len(padded_encoded_content) // size
+        partbyte=baytepart(padded_encoded_content[0:parte_size])
+
+        # Recopila todas las partes convertidas en bytearray
+        all_parts_bytes = comm.gather(partbyte, root=0)
+
+        # Concatena todas las partes recopiladas en byte_array
+        byte_array = bytearray()
+        for part in all_parts_bytes:
+            byte_array.extend(part)
+
+        # Elimina los ceros de relleno agregados en baytepart (si los hay)
+        original_length = len(padded_encoded_content)
+        num_padding_bits = 8 - (original_length % 8)
+        if num_padding_bits != 8:
+            original_length_bytes = original_length // 8
+            byte_array = byte_array[:original_length_bytes]
+        byte_array2 = bytearray([int(padded_encoded_content[i:i + 8], 2) for i in range(0, len(padded_encoded_content), 8)])
+        
         end_time = time.time()
         total_time += end_time - start_time
         process["To bytearray"] = end_time - start_time
 
         start_time = time.time()
         # Save compressed data
+        print("Tamaño del mapa", len(combined_freq_map))
+        print("Tamaño del padding", padding_length)
+        print("Tamaño del byte_array", len(byte_array))
+        print("Tamaño del byte_array2", len(byte_array2))
+        contador = 0
+        for char1, char2 in zip(byte_array, byte_array2):
+            if char1 != char2:
+                contador += 1
+        print("Cantidad de caracteres no iguales en la misma posición:", contador)
+        
         with open(compressed_file, "wb") as file:
             data = (combined_freq_map, padding_length, byte_array)
             pickle.dump(data, file)
@@ -163,6 +212,13 @@ if __name__ == "__main__":
             print(f" - {key} {item:.2f} {(item/total_time*100):.2f}%")
     else:
         data = comm.recv(source=0)
-        freque = frequency(data[0],data[1],data[2])
+        freque = frequency(data[0],data[1],content)
         #print(freque,"PROCESO", rank,"\n")
         freq_maps = comm.gather(freque, root=0)
+        data[2] = comm.recv(source=0)
+        encoded_content = encode(data[0],data[1],content,data[2])
+        comm.gather(encoded_content, root=0)
+        data[3] = comm.recv(source=0)
+        partbyte=baytepart(data[3])
+        print("Listo",rank)
+        comm.gather(partbyte, root=0)

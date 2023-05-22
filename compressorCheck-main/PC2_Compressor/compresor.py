@@ -49,7 +49,7 @@ def build_code_map(node, current_code, code_map):
 
 if __name__ == "__main__":
     original_file = sys.argv[1]
-    compressed_file = "comprimido.elmejorprofesor"
+    compressed_file = "comprimido2.elmejorprofesor"
 
     process = {}
     total_time = 0
@@ -69,7 +69,6 @@ if __name__ == "__main__":
         if char not in freq_map:
             freq_map[char] = 0
         freq_map[char] += 1
-
     end_time = time.time()
     total_time += end_time - start_time
     process["Frequency map"] = end_time - start_time
@@ -98,13 +97,14 @@ if __name__ == "__main__":
 
     start_time = time.time()
     # Convert the encoded content string to a bytearray
+
     padded_encoded_content = encoded_content + "1"
     padding_length = 8 - len(padded_encoded_content) % 8
     padded_encoded_content += "0" * padding_length
     end_time = time.time()
     total_time += end_time - start_time
     process["Padding"] = end_time - start_time
-
+    print(len(padded_encoded_content))
     start_time = time.time()
     byte_array = bytearray([int(padded_encoded_content[i:i + 8], 2) for i in range(0, len(padded_encoded_content), 8)])
     end_time = time.time()
@@ -113,6 +113,10 @@ if __name__ == "__main__":
 
     # Save compressed data
     start_time = time.time()
+    print()
+    print("Tamaño del mapa", len(freq_map))
+    print("Tamaño del padding", padding_length)
+    print("Tamaño del byte_array", len(byte_array))
     with open(compressed_file, "wb") as file:
         data = (freq_map, padding_length, byte_array)
         pickle.dump(data, file)
