@@ -59,31 +59,40 @@ def encode(start,end,content,code_map):
     return "".join([code_map[char] for char in content[start:end]])
 
 if __name__ == "__main__":
-    #Declaraciones para la paralelización
+    # Declaraciones para la paralelización
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
     data = [0]* 4 
-    #Proceso 0 es administrador y trabajador
+
+    # Proceso 0 es administrador y trabajador
     if rank==0:
-        freq_maps = []
+        process = {}
+        total_time = 0
+ 
         #Lectura del archivo
         original_file = sys.argv[1]
         compressed_file = "comprimido.elmejorprofesor"
         #Inicio del proceso de compresion
-        start_time = time.time()
 
+        start_time = time.time()
         # Read input file
         with open(original_file, 'rb') as file:
          content = file.read().decode('ISO-8859-1')
-        
+        end_time = time.time()
+        total_time += end_time - start_time
+        process["Read file"] = end_time - start_time
+
         #Asignar contenido a cada proceso
+        start_time = time.time()
+        freq_maps = []
         for i in range(1,size):
             parte_size = len(content) // size
             data[0] = i * parte_size
             data[1] = (i + 1) * parte_size
             data[2] = content
             comm.ssend(data, dest=i)
+
         #trabajar el mismo
         parte_size = len(content) // size
         data[0] = rank * parte_size
@@ -96,50 +105,64 @@ if __name__ == "__main__":
         for freq_map in freq_maps:
             for char, count in freq_map.items():
                 combined_freq_map[char] = combined_freq_map.get(char, 0) + count
+        end_time = time.time()
+        total_time += end_time - start_time
+        process["Frequency map"] = end_time - start_time
+
         #print(combined_freq_map)
         #Hasta aquí tendríamos la función de frecuencia paralelizada
-        
+        start_time = time.time()
         # Build Huffman tree
         root = build_huffman_tree(combined_freq_map)
-
+        end_time = time.time()
+        total_time += end_time - start_time
+        process["Build Huffman tree"] = end_time - start_time
+        
+        start_time = time.time()
         # Generate code map
         code_map = {}
         build_code_map(root, "", code_map)
-
-        for i in range(1,size):
-            data=code_map
-            comm.ssend(data, dest=i)
-        data[3]= code_map
-
-        # Encode content
-        encoded_content = encode(rank * parte_size,(rank + 1) * parte_size,content,code_map) #SUS(No me deja poner los data[i])
-        parts_encoded_content = comm.gather(encoded_content, root=0)
-        complete_encoded_content = ""
-        for i in parts_encoded_content:
-            complete_encoded_content = complete_encoded_content + i
+        end_time = time.time()
+        total_time += end_time - start_time
+        process["Generate code map"] = end_time - start_time
         
-        padded_encoded_content = complete_encoded_content + "1"
+        # Encode content
+        start_time = time.time()
+        encoded_content = "".join([code_map[char] for char in content])
+        end_time = time.time()
+        total_time += end_time - start_time
+        process["encoded"] = end_time - start_time
+
+        start_time = time.time()
+        # Convert the encoded content string to a bytearray
+        padded_encoded_content = encoded_content + "1"
         padding_length = 8 - len(padded_encoded_content) % 8
         padded_encoded_content += "0" * padding_length
-        byte_array = bytearray([int(padded_encoded_content[i:i + 8], 2) for i in range(0, len(padded_encoded_content), 8)])
+        end_time = time.time()
+        total_time += end_time - start_time
+        process["padding"] = end_time - start_time
 
+        start_time = time.time()
+        byte_array = bytearray([int(padded_encoded_content[i:i + 8], 2) for i in range(0, len(padded_encoded_content), 8)])
+        end_time = time.time()
+        total_time += end_time - start_time
+        process["To bytearray"] = end_time - start_time
+
+        start_time = time.time()
         # Save compressed data
         with open(compressed_file, "wb") as file:
             data = (combined_freq_map, padding_length, byte_array)
             pickle.dump(data, file)
-        
         end_time = time.time()
+        total_time += end_time - start_time
+        process["save the file"] = end_time - start_time
 
-        print(f"Compression time: {end_time - start_time:.2f} seconds")
+        print(f"Compression time: {total_time:.2f}")
+
+        for key, item in process.items():
+            print(f" - {key} {item:.2f} {(item/total_time*100):.2f}%")
     else:
         data = comm.recv(source=0)
         freque = frequency(data[0],data[1],data[2])
         #print(freque,"PROCESO", rank,"\n")
         freq_maps = comm.gather(freque, root=0)
-        data[3] = comm.recv(source=0)
-        encoded_content = encode(data[0],data[1],data[2],data[3])
-        comm.gather(encoded_content, root=0)
-
-
-
-
