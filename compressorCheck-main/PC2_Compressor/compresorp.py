@@ -155,17 +155,19 @@ if __name__ == "__main__":
 
         start_time = time.time()
         #paralelización de array de bytes
-        for i in range(1,size):
-            parte_size = len(padded_encoded_content) // size
-            data[0] = (i-1) * parte_size
-            if i==size-1:
-                data[1] = min(i * parte_size, len(padded_encoded_content))
-            else:
-                data[1] = min(i * parte_size, len(padded_encoded_content))
-            data[2] = padded_encoded_content[data[0]:data[1]]
-            comm.send(data[2], dest=i)
-        parte_size = len(padded_encoded_content) // size
-        partbyte=baytepart(padded_encoded_content[0:parte_size])
+
+        #
+        parte_size_bits = len(padded_encoded_content) // size
+        parte_size_bits -= parte_size_bits % 8
+        for i in range(1, size):
+            data[0] = i * parte_size_bits
+            data[1] = data[0] + parte_size_bits
+            if i == size - 1:
+                data[1]= len(padded_encoded_content)
+            part = padded_encoded_content[data[0]:data[1]]
+            comm.send(part, dest=i)
+        partbyte = baytepart(padded_encoded_content[0:parte_size_bits])
+        #
 
         # Recopila todas las partes convertidas en bytearray
         all_parts_bytes = comm.gather(partbyte, root=0)
