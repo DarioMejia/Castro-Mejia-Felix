@@ -104,7 +104,6 @@ if __name__ == "__main__":
     end_time = time.time()
     total_time += end_time - start_time
     process["Padding"] = end_time - start_time
-    print(len(padded_encoded_content))
     start_time = time.time()
     byte_array = bytearray([int(padded_encoded_content[i:i + 8], 2) for i in range(0, len(padded_encoded_content), 8)])
     end_time = time.time()
@@ -113,10 +112,6 @@ if __name__ == "__main__":
 
     # Save compressed data
     start_time = time.time()
-    print()
-    print("Tamaño del mapa", len(freq_map))
-    print("Tamaño del padding", padding_length)
-    print("Tamaño del byte_array", len(byte_array))
     with open(compressed_file, "wb") as file:
         data = (freq_map, padding_length, byte_array)
         pickle.dump(data, file)

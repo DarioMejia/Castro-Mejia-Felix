@@ -139,7 +139,6 @@ if __name__ == "__main__":
         complete_encoded_content = ""
         for i in parts_encoded_content:
             complete_encoded_content += i
-        encoded_content = "".join([code_map[char] for char in content])
         end_time = time.time()
         total_time += end_time - start_time
         process["encoded"] = end_time - start_time
@@ -167,7 +166,6 @@ if __name__ == "__main__":
             part = padded_encoded_content[data[0]:data[1]]
             comm.send(part, dest=i)
         partbyte = baytepart(padded_encoded_content[0:parte_size_bits])
-        #
 
         # Recopila todas las partes convertidas en bytearray
         all_parts_bytes = comm.gather(partbyte, root=0)
@@ -176,14 +174,6 @@ if __name__ == "__main__":
         byte_array = bytearray()
         for part in all_parts_bytes:
             byte_array.extend(part)
-
-        # Elimina los ceros de relleno agregados en baytepart (si los hay)
-        original_length = len(padded_encoded_content)
-        num_padding_bits = 8 - (original_length % 8)
-        if num_padding_bits != 8:
-            original_length_bytes = original_length // 8
-            byte_array = byte_array[:original_length_bytes]
-        byte_array2 = bytearray([int(padded_encoded_content[i:i + 8], 2) for i in range(0, len(padded_encoded_content), 8)])
         
         end_time = time.time()
         total_time += end_time - start_time
@@ -191,15 +181,6 @@ if __name__ == "__main__":
 
         start_time = time.time()
         # Save compressed data
-        print("Tamaño del mapa", len(combined_freq_map))
-        print("Tamaño del padding", padding_length)
-        print("Tamaño del byte_array", len(byte_array))
-        print("Tamaño del byte_array2", len(byte_array2))
-        contador = 0
-        for char1, char2 in zip(byte_array, byte_array2):
-            if char1 != char2:
-                contador += 1
-        print("Cantidad de caracteres no iguales en la misma posición:", contador)
         
         with open(compressed_file, "wb") as file:
             data = (combined_freq_map, padding_length, byte_array)
@@ -222,5 +203,4 @@ if __name__ == "__main__":
         comm.gather(encoded_content, root=0)
         data[3] = comm.recv(source=0)
         partbyte=baytepart(data[3])
-        print("Listo",rank)
         comm.gather(partbyte, root=0)
