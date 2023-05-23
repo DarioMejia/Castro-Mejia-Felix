@@ -1,2 +1,2 @@
-# Castro-Mejia-Felix
+# Compresor Secuencial y Paralelo
  
