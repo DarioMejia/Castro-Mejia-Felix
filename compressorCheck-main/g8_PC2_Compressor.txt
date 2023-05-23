@@ -1,0 +1,15 @@
+text1.txt
+sanity check Verification result: ok 0
+ct  1.70 ctp3  1.01 ctp10  1.41 rate 57 ratep3 57 ratep10 57 diff 0 diffp3 0 diffp10 0
+text2.txt
+sanity check Verification result: ok 0
+ct  3.78 ctp3  2.16 ctp10  2.35 rate 56 ratep3 56 ratep10 56 diff 0 diffp3 0 diffp10 0
+text3.txt
+sanity check Verification result: ok 0
+ct  15.00 ctp3  9.71 ctp10  9.71 rate 58 ratep3 58 ratep10 58 diff 0 diffp3 0 diffp10 37644498
+text4.txt
+sanity check Verification result: ok 0
+ct  1.78 ctp3  1.15 ctp10  1.45 rate 59 ratep3 59 ratep10 59 diff 0 diffp3 0 diffp10 0
+text5.txt
+sanity check Verification result: ok 0
+ct  1.68 ctp3  1.01 ctp10  1.31 rate 57 ratep3 57 ratep10 57 diff 0 diffp3 0 diffp10 0

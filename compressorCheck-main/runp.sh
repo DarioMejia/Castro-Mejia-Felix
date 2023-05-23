@@ -75,7 +75,7 @@ for fileName in ${fileList[@]}; do
     rm -f comprimidop.elmejorprofesor
     rm -f descomprimidop-elmejorprofesor.txt
 
-    echo "ct ${ct} ctp3 ${ctp3} ctp10 ${ctp10} rate ${rate} ratep3 ${ratep10} ratep3 ${ratep10} diff ${diffOriginal}" diffp3 ${diffOriginalp3}" diffp10 ${diffOriginalp10}">> ${outputFileName}
+    echo "ct ${ct} ctp3 ${ctp3} ctp10 ${ctp10} rate ${rate} ratep3 ${ratep3} ratep10 ${ratep10} diff ${diffOriginal}" diffp3 ${diffOriginalp3}" diffp10 ${diffOriginalp10}">> ${outputFileName}
 
     rm -f $fileName
 done

@@ -24,31 +24,22 @@ if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
-    process = {}
     total_time = 0
     start_time = time.time()
     # Load compressed data
     with open(compressed_file, "rb") as file:
         data = pickle.load(file)
-    end_time = time.time()
-    total_time += end_time - start_time
 
 
     if rank == 0:
-        start_time = time.time()
         freq_map, padding_length, byte_array = data
-        end_time = time.time()
-        total_time += end_time - start_time
 
-        start_time = time.time()
+
          # Rebuild Huffman tree
         Root = build_huffman_tree(freq_map)
-        end_time = time.time()
-        total_time += end_time - start_time
-
 
         # Convert the bytearray to an encoded content string
-        start_time = time.time()
+
         # Determina el tamaño de las partes del byte_array a procesar
         parte_size = len(byte_array) // size
         for i in range(1,size):
@@ -65,42 +56,47 @@ if __name__ == "__main__":
         encoded_content_parts = comm.gather(encoded_content_parte, root=0)
         encoded_content = "".join(encoded_content_parts)
         encoded_content = encoded_content[:-(padding_length + 1)]
-        end_time = time.time()
-        total_time += end_time - start_time
-
-
 
         # Decode content
-        start_time = time.time()
-        for i in range(1,size):
-            parte_size = len(encoded_content) // size
-            start = i * parte_size
-            if i==size-1:
-                end = len(encoded_content)
-            else:
-                end = (i + 1) * parte_size
+        part_starts = [0]
+        part_ends = []
+
+        for i in range(size - 1):
+            current_pos = part_starts[-1]
+            while current_pos < len(encoded_content):
+                current_node = Root
+                while current_node.char is None:
+                    current_bit = encoded_content[current_pos]
+                    current_node = current_node.left if current_bit == "0" else current_node.right
+                    current_pos += 1
+                part_ends.append(current_pos)
+                if len(part_ends) == i + 1:
+                    break
+            part_starts.append(current_pos)
+        part_ends.append(len(encoded_content))
+
+
+        for i in range(1, size):
+            start = part_starts[i]
+            end = part_ends[i]
             datos[0] = encoded_content[start:end]
-            datos[1]= Root
+            datos[1] = Root
             comm.send(datos, dest=i)
-        decode_part = decodeTree(encoded_content[0:parte_size],Root)
+        decode_part = decodeTree(encoded_content[part_starts[0]:part_ends[0]], Root)
         decodes_parts = comm.gather(decode_part, root=0)
         decoded_content = []
         for i in decodes_parts:
             decoded_content += i
-        end_time = time.time()
-        total_time += end_time - start_time
-
 
         
         # Write decoded content
-        start_time = time.time()
         with open(decompressed_file, "wb") as file:
             file.write(b''.join(decoded_content))
+
+
         end_time = time.time()
         total_time += end_time - start_time
-
-
-        print(f"Decompression time: {total_time:.2f} seconds")
+        print(f" {total_time:.2f} ")
 
 
     else:
