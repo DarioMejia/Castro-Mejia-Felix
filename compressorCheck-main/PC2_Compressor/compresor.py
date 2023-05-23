@@ -49,7 +49,7 @@ def build_code_map(node, current_code, code_map):
 
 if __name__ == "__main__":
     original_file = sys.argv[1]
-    compressed_file = "comprimido2.elmejorprofesor"
+    compressed_file = "comprimido.elmejorprofesor"
 
     process = {}
     total_time = 0
@@ -60,7 +60,6 @@ if __name__ == "__main__":
         content = file.read().decode('ISO-8859-1')
     end_time = time.time()
     total_time += end_time - start_time
-    process["Read file"] = end_time - start_time
 
     # Build frequency map
     start_time = time.time()
@@ -71,14 +70,12 @@ if __name__ == "__main__":
         freq_map[char] += 1
     end_time = time.time()
     total_time += end_time - start_time
-    process["Frequency map"] = end_time - start_time
     
     # Build Huffman tree
     start_time = time.time()
     root = build_huffman_tree(freq_map)
     end_time = time.time()
     total_time += end_time - start_time
-    process["Build Huffman tree"] = end_time - start_time
     
     # Generate code map
     start_time = time.time()
@@ -86,14 +83,13 @@ if __name__ == "__main__":
     build_code_map(root, "", code_map)
     end_time = time.time()
     total_time += end_time - start_time
-    process["Generate code map"] = end_time - start_time
 
     # Encode content
     start_time = time.time()
     encoded_content = "".join([code_map[char] for char in content])
     end_time = time.time()
     total_time += end_time - start_time
-    process["Encode content"] = end_time - start_time
+
 
     start_time = time.time()
     # Convert the encoded content string to a bytearray
@@ -103,12 +99,12 @@ if __name__ == "__main__":
     padded_encoded_content += "0" * padding_length
     end_time = time.time()
     total_time += end_time - start_time
-    process["Padding"] = end_time - start_time
+
     start_time = time.time()
     byte_array = bytearray([int(padded_encoded_content[i:i + 8], 2) for i in range(0, len(padded_encoded_content), 8)])
     end_time = time.time()
     total_time += end_time - start_time
-    process["To bytearray"] = end_time - start_time
+
 
     # Save compressed data
     start_time = time.time()
@@ -117,7 +113,7 @@ if __name__ == "__main__":
         pickle.dump(data, file)
     end_time = time.time()
     total_time += end_time - start_time
-    process["save the file"] = end_time - start_time
+
 
     print(f"Compression time: {total_time:.2f}")
 

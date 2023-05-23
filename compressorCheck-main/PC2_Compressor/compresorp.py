@@ -68,16 +68,17 @@ if __name__ == "__main__":
     rank = comm.Get_rank()
     size = comm.Get_size()
     data = [0]* 5 
+    
     #Lectura del archivo
     original_file = sys.argv[1]
-    compressed_file = "comprimido.elmejorprofesor"
+    compressed_file = "comprimidop.elmejorprofesor"
     # Read input file
     with open(original_file, 'rb') as file:
         content = file.read().decode('ISO-8859-1')
 
     # Proceso 0 es administrador y trabajador
     if rank==0:
-        process = {}
+
         total_time = 0
  
         #Inicio del proceso de compresion
@@ -85,7 +86,7 @@ if __name__ == "__main__":
         start_time = time.time()
         end_time = time.time()
         total_time += end_time - start_time
-        process["Read file"] = end_time - start_time
+
 
         #Asignar contenido a cada proceso
         start_time = time.time()
@@ -109,7 +110,7 @@ if __name__ == "__main__":
                 combined_freq_map[char] = combined_freq_map.get(char, 0) + count
         end_time = time.time()
         total_time += end_time - start_time
-        process["Frequency map"] = end_time - start_time
+
 
         #print(combined_freq_map)
         #Hasta aquí tendríamos la función de frecuencia paralelizada
@@ -118,7 +119,7 @@ if __name__ == "__main__":
         root = build_huffman_tree(combined_freq_map)
         end_time = time.time()
         total_time += end_time - start_time
-        process["Build Huffman tree"] = end_time - start_time
+
         
         start_time = time.time()
         # Generate code map
@@ -126,7 +127,7 @@ if __name__ == "__main__":
         build_code_map(root, "", code_map)
         end_time = time.time()
         total_time += end_time - start_time
-        process["Generate code map"] = end_time - start_time
+
         
         for i in range(1,size):
             data=code_map
@@ -141,7 +142,7 @@ if __name__ == "__main__":
             complete_encoded_content += i
         end_time = time.time()
         total_time += end_time - start_time
-        process["encoded"] = end_time - start_time
+
 
         start_time = time.time()
         # Convert the encoded content string to a bytearray
@@ -150,7 +151,7 @@ if __name__ == "__main__":
         padded_encoded_content += "0" * padding_length
         end_time = time.time()
         total_time += end_time - start_time
-        process["padding"] = end_time - start_time
+
 
         start_time = time.time()
         #paralelización de array de bytes
@@ -177,7 +178,7 @@ if __name__ == "__main__":
         
         end_time = time.time()
         total_time += end_time - start_time
-        process["To bytearray"] = end_time - start_time
+
 
         start_time = time.time()
         # Save compressed data
@@ -187,12 +188,11 @@ if __name__ == "__main__":
             pickle.dump(data, file)
         end_time = time.time()
         total_time += end_time - start_time
-        process["save the file"] = end_time - start_time
 
         print(f"Compression time: {total_time:.2f}")
 
-        for key, item in process.items():
-            print(f" - {key} {item:.2f} {(item/total_time*100):.2f}%")
+        #for key, item in process.items():
+        #    print(f" - {key} {item:.2f} {(item/total_time*100):.2f}%")
     else:
         data = comm.recv(source=0)
         freque = frequency(data[0],data[1],content)

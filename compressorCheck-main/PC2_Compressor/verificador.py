@@ -15,7 +15,7 @@ def verify(original_file, decompressed_file):
 
 if __name__ == "__main__":
     original_file = sys.argv[1]
-    decompressed_file = "descomprimido-elmejorprofesor.txt"
+    decompressed_file = sys.argv[2]
 
     result = verify(original_file, decompressed_file)
     print(f"Verification result: {result}")
